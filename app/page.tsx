@@ -45,7 +45,7 @@ export default function Home(){
    <div className="grid">{videos.map(v=><article className="card" key={v.id}>
     <h3>{v.title}</h3><small>{v.published_at?.slice(0,10)||"Дата не указана"}</small>
     <p>{(v.description||"Описание отсутствует").slice(0,260)}{(v.description||"").length>260?"…":""}</p>
-    <a href={v.url} target="_blank" rel="noopener noreferrer">Смотреть на YouTube ↗</a>
+    <p><a href={"/video/"+encodeURIComponent(v.id)}>Открыть карточку и конспект →</a></p><a href={v.url} target="_blank" rel="noopener noreferrer">Смотреть на YouTube ↗</a>
    </article>)}</div>
    {!loading&&!error&&<div className="form" style={{marginTop:20,alignItems:"center"}}>
     <button disabled={page===1} onClick={()=>setPage(p=>p-1)}>← Назад</button>
