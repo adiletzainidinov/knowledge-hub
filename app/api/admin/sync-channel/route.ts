@@ -9,7 +9,7 @@ export async function POST(req:NextRequest){
  if(!isConfigured()||!process.env.YOUTUBE_API_KEY)return NextResponse.json({error:"Не настроены Supabase или YouTube API"},{status:503});
  try{
   const body=await req.json().catch(()=>({}));
-  const pageToken=body.pageToken;
+  const pageToken=body.pageToken ?? undefined;
   if(pageToken!==undefined&&(typeof pageToken!=="string"||pageToken.length>500))return NextResponse.json({error:"Неверный токен страницы"},{status:400});
   const key=process.env.YOUTUBE_API_KEY!;
   const chUrl=new URL("https://www.googleapis.com/youtube/v3/channels");
