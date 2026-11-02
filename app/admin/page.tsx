@@ -11,6 +11,10 @@ export default function Admin(){
  const [page,setPage]=useState(0);
  const [nextToken,setNextToken]=useState<string|null>(null);
  const stop=useRef(false);
+ const [videoId,setVideoId]=useState("");
+ const [transcript,setTranscript]=useState("");
+ const [sourceNote,setSourceNote]=useState("");
+ const [transcriptStatus,setTranscriptStatus]=useState("");
  async function request(url:string,body?:unknown){
   const response=await fetch(url,{method:"POST",headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify(body||{})});
   const data=await response.json();
@@ -38,6 +42,7 @@ export default function Admin(){
   }catch(e){setMessage((e instanceof Error?e.message:"Ошибка")+". Уже обработано: "+saved+". Нажми «Продолжить», чтобы повторить текущую партию.");}
   finally{setBusy(false);}
  }
+ async function saveTranscript(){setBusy(true);setTranscriptStatus("");try{const data=await request("/api/admin/transcripts",{video_id:videoId,transcript,source_note:sourceNote});setTranscriptStatus("Расшифровка сохранена: "+data.characters+" символов. Ожидает проверки.");}catch(e){setTranscriptStatus(e instanceof Error?e.message:"Ошибка сохранения");}finally{setBusy(false);}}
  function reset(){setNextToken(null);setProgress(0);setPage(0);setTotal(0);setMessage("Прогресс сброшен. Можно начать заново.");}
  return <main><header>📚 KnowledgeHub <span style={{float:"right",fontSize:13}}>Администрирование</span></header>
  <h1>Библиотека знаний</h1><p>Импорт YouTube-канала @olegcloser в Supabase без скачивания видеофайлов.</p>
@@ -52,5 +57,6 @@ export default function Admin(){
  {message&&<p role="status">{message}</p>}</section>
  <section className="panel"><h2>Проверка первых 5 видео</h2><button disabled={busy||!token.trim()} onClick={firstFive}>Сохранить первые 5 видео</button></section>
  {items.length>0&&<section className="panel"><h2>Сохранённые видео</h2><div className="grid">{items.map(v=><article className="card" key={v.id}><h3>{v.title}</h3><a href={v.url} target="_blank" rel="noopener noreferrer">Смотреть на YouTube ↗</a></article>)}</div></section>}
+ <section className="panel"><h2>Импорт расшифровки</h2><p>Для текста, полученного законным способом. Источник обязателен. ИИ-конспект не создаётся до проверки содержания.</p><p><input aria-label="YouTube ID видео" placeholder="YouTube ID (11 символов)" value={videoId} onChange={e=>setVideoId(e.target.value)}/></p><p><textarea aria-label="Текст расшифровки" rows={10} style={{width:"100%",padding:12,borderRadius:12,background:"#0b1020",color:"white"}} placeholder="Вставь полный текст расшифровки…" value={transcript} onChange={e=>setTranscript(e.target.value)}/></p><p><input aria-label="Источник текста" placeholder="Источник текста и разрешение на использование" value={sourceNote} onChange={e=>setSourceNote(e.target.value)}/></p><button disabled={busy||!token.trim()||!videoId.trim()||transcript.trim().length<50||!sourceNote.trim()} onClick={saveTranscript}>Сохранить расшифровку</button>{transcriptStatus&&<p role="status">{transcriptStatus}</p>}</section>
  <p><a href="/">Вернуться к каталогу</a></p></main>;
 }
