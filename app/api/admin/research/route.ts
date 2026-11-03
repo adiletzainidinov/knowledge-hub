@@ -14,7 +14,7 @@ const concepts=[
 ];
 function words(s:string){return [...new Set((s.toLowerCase().match(/[а-яёa-z0-9]{3,}/g)||[]).filter(w=>!stop.has(w)))].slice(0,20)}
 function expand(query:string){
- const {terms,extra}=expand(query);const extra=new Set<string>();
+ const terms=words(query);const extra=new Set<string>();
  for(const group of concepts){if(group.some(stem=>terms.some(w=>w.startsWith(stem))))for(const stem of group)extra.add(stem)}
  return {terms,extra:[...extra].filter(stem=>!terms.some(w=>w.startsWith(stem)))};
 }
