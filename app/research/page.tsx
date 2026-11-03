@@ -4,7 +4,7 @@ type Hit={video_id:string;title:string;url:string;excerpt:string;score:number;ve
 type Result={scanned_transcripts:number;results:Hit[];notice:string;error?:string};
 export default function Research(){
  const [token,setToken]=useState("");const [query,setQuery]=useState("");
- const [data,setData]=useState<Result|null>(null);const [busy,setBusy]=useState(false);
+ const [data,setData]=useState<Result|null>(null);const [answer,setAnswer]=useState("");const [aiError,setAiError]=useState("");const [aiBusy,setAiBusy]=useState(false);const [busy,setBusy]=useState(false);
  async function search(e:React.FormEvent){
   e.preventDefault();setBusy(true);setData(null);
   try{
@@ -13,6 +13,7 @@ export default function Research(){
   }catch(e){setData({scanned_transcripts:0,results:[],notice:"",error:e instanceof Error?e.message:"Ошибка"})}
   finally{setBusy(false)}
  }
+ async function ask(){setAiBusy(true);setAiError("");setAnswer("");try{const r=await fetch("/api/admin/ask",{method:"POST",headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({question:query}),cache:"no-store"});const j=await r.json();if(!r.ok)throw Error(j.error||"Ошибка ИИ");setAnswer(j.answer||"Нет ответа");}catch(e){setAiError(e instanceof Error?e.message:"Ошибка ИИ")}finally{setAiBusy(false)}}
  return <main style={{maxWidth:850,margin:"0 auto",padding:20}}>
   <header><a href="/">← Библиотека</a></header>
   <h1>Поиск знаний по расшифровкам</h1>
@@ -24,7 +25,7 @@ export default function Research(){
     <button type="submit" disabled={busy}>{busy?"Ищем…":"Найти в расшифровках"}</button>
    </form>
   </section>
-  {data?.error&&<p role="alert">{data.error}</p>}
+  <section className="panel"><h2>ИИ-консультант</h2><p>Сначала введите токен и вопрос выше. Ответ основан на найденных фрагментах с указанием источников.</p><button onClick={ask} disabled={aiBusy||query.trim().length<5||!token}>{aiBusy?"ИИ анализирует…":"Получить ответ ИИ"}</button>{aiError&&<p role="alert">{aiError}</p>}{answer&&<p style={{whiteSpace:"pre-wrap"}}>{answer}</p>}</section>\n  {data?.error&&<p role="alert">{data.error}</p>}
   {data&&!data.error&&<section className="panel"><h2>Найдено: {data.results.length} источников</h2><p>Проверено расшифровок: {data.scanned_transcripts}. {data.notice}</p>
    {data.results.length===0&&<p>Совпадений нет. Попробуйте другие слова.</p>}
    {data.results.map(h=><article className="card" key={h.video_id} style={{marginBottom:14}}>
