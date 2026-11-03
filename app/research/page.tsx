@@ -17,7 +17,7 @@ export default function Research(){
  return <main style={{maxWidth:850,margin:"0 auto",padding:20}}>
   <header><a href="/">← Библиотека</a></header>
   <h1>Поиск знаний по расшифровкам</h1>
-  <p>Поиск по всем сохранённым текстам. Показывает фрагменты и источники; это ещё не ИИ-ответ.</p>
+  <p>Поиск по всем сохранённым текстам. Показывает фрагменты и источники; ниже доступен отдельный ИИ-консультант при настройке серверного API-ключа.</p>
   <section className="panel">
    <form onSubmit={search} style={{display:"grid",gap:12}}>
     <label>Токен администратора (не сохраняется на сайте)<input type="password" autoComplete="off" value={token} onChange={e=>setToken(e.target.value)} required placeholder="ADMIN_IMPORT_TOKEN"/></label>
@@ -25,7 +25,8 @@ export default function Research(){
     <button type="submit" disabled={busy}>{busy?"Ищем…":"Найти в расшифровках"}</button>
    </form>
   </section>
-  <section className="panel"><h2>ИИ-консультант</h2><p>Сначала введите токен и вопрос выше. Ответ основан на найденных фрагментах с указанием источников.</p><button onClick={ask} disabled={aiBusy||query.trim().length<5||!token}>{aiBusy?"ИИ анализирует…":"Получить ответ ИИ"}</button>{aiError&&<p role="alert">{aiError}</p>}{answer&&<p style={{whiteSpace:"pre-wrap"}}>{answer}</p>}</section>\n  {data?.error&&<p role="alert">{data.error}</p>}
+  <section className="panel"><h2>ИИ-консультант</h2><p>Сначала введите токен и вопрос выше. Ответ основан на найденных фрагментах с указанием источников.</p><button onClick={ask} disabled={aiBusy||query.trim().length<5||!token}>{aiBusy?"ИИ анализирует…":"Получить ответ ИИ"}</button>{aiError&&<p role="alert">{aiError}</p>}{answer&&<p style={{whiteSpace:"pre-wrap"}}>{answer}</p>}</section> 
+  {data?.error&&<p role="alert">{data.error}</p>}
   {data&&!data.error&&<section className="panel"><h2>Найдено: {data.results.length} источников</h2><p>Проверено расшифровок: {data.scanned_transcripts}. {data.notice}</p>
    {data.results.length===0&&<p>Совпадений нет. Попробуйте другие слова.</p>}
    {data.results.map(h=><article className="card" key={h.video_id} style={{marginBottom:14}}>
