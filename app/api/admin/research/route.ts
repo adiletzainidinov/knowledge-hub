@@ -57,7 +57,9 @@ export async function POST(req:NextRequest){
    const paragraphs=t.transcript.match(/[\s\S]{1,900}/g)||[];
    const scored=paragraphs.map((p,i)=>{
     const low=p.toLowerCase();
-    const score=rank(low,terms,extra);
+    const v=names.get(t.video_id);
+    const titleBoost=v?Math.min(6,rank(v.title,terms,extra)):0;
+    const score=rank(low,terms,extra)+titleBoost;
     return {p,i,score};
    }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score);
    for(const item of scored.slice(0,2)){
@@ -68,6 +70,6 @@ export async function POST(req:NextRequest){
   hits.sort((a,b)=>b.score-a.score);
   const selected=[] as typeof hits;const used=new Set<string>();
   for(const h of hits){if(!used.has(h.video_id)){selected.push(h);used.add(h.video_id)}if(selected.length>=12)break}
-  return NextResponse.json({query,scanned_transcripts:transcripts.length,matched_videos:used.size,results:selected,notice:"Тематический поиск использует совпадения и связанные понятия; это ещё не полноценный семантический поиск. Расшифровки не проверены вручную."},{headers:{"Cache-Control":"no-store"}});
+  return NextResponse.json({query,scanned_transcripts:transcripts.length,matched_videos:used.size,search_mode:"keyword_and_topic",results:selected,notice:"Тематический поиск использует совпадения и связанные понятия; это ещё не полноценный семантический поиск. Расшифровки не проверены вручную."},{headers:{"Cache-Control":"no-store"}});
  }catch(e){return NextResponse.json({error:e instanceof Error?e.message:"Ошибка поиска"},{status:502})}
 }
