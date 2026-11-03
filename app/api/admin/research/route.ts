@@ -3,7 +3,27 @@ export const runtime="nodejs";
 type RecordRow={video_id:string;transcript:string;language:string|null;verified:boolean|null};
 type Video={id:string;title:string;url:string};
 const stop=new Set(["это","того","когда","если","чтобы","какие","какой","почему","очень","можно","нужно","просто","видео","продажи","продаж","клиент","клиента","клиенты","about","with","from"]);
+const concepts=[
+ ["совет","муж","жен","супруг","родител","семь","согласова","решени","принима","одобрен","лпр"],
+ ["подума","думать","сомнева","сомнен","неувер","отлож","позже","зависш","пропал","возражен"],
+ ["дорог","цен","стоимост","бюджет","скидк","дешев","денег","оплат"],
+ ["довер","репутац","отзыв","кейс","гарант","безопас"],
+ ["перезвон","напомн","касани","повторн","догон","фоллоу","follow"],
+ ["закрыт","сделк","купит","покупк","оформ","оплат"],
+ ["вопрос","выясн","потребност","диагност","слуша","уточн"]
+];
 function words(s:string){return [...new Set((s.toLowerCase().match(/[а-яёa-z0-9]{3,}/g)||[]).filter(w=>!stop.has(w)))].slice(0,20)}
+function expand(query:string){
+ const {terms,extra}=expand(query);const extra=new Set<string>();
+ for(const group of concepts){if(group.some(stem=>terms.some(w=>w.startsWith(stem))))for(const stem of group)extra.add(stem)}
+ return {terms,extra:[...extra].filter(stem=>!terms.some(w=>w.startsWith(stem)))};
+}
+function rank(fragment:string,terms:string[],extra:string[]){
+ const low=fragment.toLowerCase();
+ const direct=terms.filter(w=>low.includes(w)).length;
+ const related=extra.filter(w=>low.includes(w)).length;
+ return direct*4+Math.min(related,5);
+}
 async function read<T>(base:string,key:string,table:string,select:string):Promise<T[]>{
  const all:T[]=[];
  for(let offset=0;offset<10000;offset+=200){
@@ -37,7 +57,7 @@ export async function POST(req:NextRequest){
    const paragraphs=t.transcript.match(/[\s\S]{1,900}/g)||[];
    const scored=paragraphs.map((p,i)=>{
     const low=p.toLowerCase();
-    const score=terms.reduce((n,w)=>n+(low.includes(w)?1:0),0);
+    const score=rank(low,terms,extra);
     return {p,i,score};
    }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score);
    for(const item of scored.slice(0,2)){
@@ -48,6 +68,6 @@ export async function POST(req:NextRequest){
   hits.sort((a,b)=>b.score-a.score);
   const selected=[] as typeof hits;const used=new Set<string>();
   for(const h of hits){if(!used.has(h.video_id)){selected.push(h);used.add(h.video_id)}if(selected.length>=12)break}
-  return NextResponse.json({query,scanned_transcripts:transcripts.length,matched_videos:used.size,results:selected,notice:"Это найденные фрагменты источников, а не готовый ответ ИИ. Автоматическая полнота и точность субтитров не подтверждены."},{headers:{"Cache-Control":"no-store"}});
+  return NextResponse.json({query,scanned_transcripts:transcripts.length,matched_videos:used.size,results:selected,notice:"Тематический поиск использует совпадения и связанные понятия; это ещё не полноценный семантический поиск. Расшифровки не проверены вручную."},{headers:{"Cache-Control":"no-store"}});
  }catch(e){return NextResponse.json({error:e instanceof Error?e.message:"Ошибка поиска"},{status:502})}
 }
