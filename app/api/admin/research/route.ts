@@ -45,7 +45,7 @@ export async function POST(req:NextRequest){
   const body=await req.json() as {query?:string};
   const query=String(body.query||"").trim().slice(0,250);
   if(query.length<3)return NextResponse.json({error:"Введите вопрос от 3 символов"},{status:400});
-  const terms=words(query);
+  const {terms,extra}=expand(query);
   if(!terms.length)return NextResponse.json({error:"Уточните вопрос"},{status:400});
   const [transcripts,videos]=await Promise.all([
    read<RecordRow>(base,key,"video_transcripts","video_id,transcript,language,verified"),
